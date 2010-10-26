@@ -2,18 +2,9 @@ package com.fullmetalgalaxy.tools;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.PrintStream;
 
 import com.fullmetalgalaxy.model.ModelFmpInit;
-import com.fullmetalgalaxy.model.TokenType;
-import com.fullmetalgalaxy.model.persist.AnBoardPosition;
-import com.fullmetalgalaxy.model.persist.EbAccount;
-import com.fullmetalgalaxy.model.persist.EbGame;
-import com.fullmetalgalaxy.model.persist.EbRegistration;
-import com.fullmetalgalaxy.model.persist.EbToken;
-import com.thoughtworks.xstream.XStream;
-import com.thoughtworks.xstream.io.xml.DomDriver;
 
 
 /**
@@ -26,109 +17,95 @@ import com.thoughtworks.xstream.io.xml.DomDriver;
  */
 public class Main
 {
+  
+  private static void printUsage(PrintStream p_out)
+  {
+    p_out.println("Usage: FMGTools <format> [InputFile] <format> [OutputFile]");
+    p_out.println("Availble format: -bin -xml -fmp");
+  }
 
+  private static DriverFileFormat parseFormat(String p_format)
+  {
+    assert p_format != null;
+    DriverFileFormat driver = null;
+    if(p_format.endsWith( "fmp" ))
+    {
+      driver = new DriverFMP();
+    }
+    if(p_format.endsWith( "bin" ))
+    {
+      driver = new DriverBin();
+    }
+    if(p_format.endsWith( "xml" ))
+    {
+      driver = new DriverXML();
+    }
+    if(driver == null)
+    {
+      driver = new DriverEmpty();
+    }
+    return driver;
+  }
+  
   /**
    * @param args
    */
   public static void main(String[] args)
   {
-    System.out.println( "FMG Tool started" );
-    // createXml();
-    gameXml2Bin( "../fullmetalgalaxy/war/puzzles/unpontontroploin/model.xml",
-        "../fullmetalgalaxy/war/puzzles/unpontontroploin/model.bin" );
-    // gameBin2Xml( "tutorial.bin" );
-  }
-
-
-  protected static void gameBin2Xml(String p_binFile)
-  {
-    FileInputStream fis = null;
-    ObjectInputStream in = null;
-    EbGame game = null;
-    try
+    
+    if(args.length != 4 && args.length != 2)
     {
-      fis = new FileInputStream( new File( p_binFile ) );
-      in = new ObjectInputStream( fis );
-      game = EbGame.class.cast( in.readObject() );
-      in.close();
-      fis.close();
-    } catch( Exception ex )
-    {
-      ex.printStackTrace();
-    }
-
-    XStream xstream = new XStream( new DomDriver() );
-    xstream.toXML( game, System.out );
-  }
-
-  protected static void gameXml2Bin(String p_xmlFile, String p_binFile)
-  {
-    FileInputStream fis = null;
-    EbGame game = null;
-    try
-    {
-      fis = new FileInputStream( p_xmlFile );
-      XStream xstream = new XStream( new DomDriver() );
-      game = EbGame.class.cast( xstream.fromXML( fis ) );
-      fis.close();
-    } catch( Exception ex )
-    {
-      ex.printStackTrace();
-    }
-    if( game == null )
-    {
-      System.out.println( "Error: no game loaded" );
+      printUsage(System.out);
       return;
     }
-
-    ModelFmpInit model = new ModelFmpInit();
-    model.setGame( game );
-    EbAccount account = new EbAccount();
-    account.setId( 1 );
-    account.setLogin( "Vous" );
-    model.getMapAccounts().put( account.getId(), account );
-    account = new EbAccount();
-    account.setId( 2 );
-    account.setLogin( "CPU" );
-    model.getMapAccounts().put( account.getId(), account );
     
+    // parse arguments
+    String inputFormat = null;
+    String outputFormat = null;
+    String inputFile = null;
+    String outputFile = null;
+    if(args.length == 2)
+    {
+      inputFormat = args[0];
+      inputFile = args[0];
+      outputFormat = args[1];
+      outputFile = args[1];
+    } else {
+      inputFormat = args[0];
+      inputFile = args[1];
+      outputFormat = args[2];
+      outputFile = args[3];
+    }
+    
+    // load file drivers
+    DriverFileFormat inputDriver = parseFormat( inputFormat );
+    DriverFileFormat outputDriver = parseFormat( outputFormat );
+
+    // do the job !
+    FileInputStream fis = null;
     FileOutputStream fos = null;
-    ObjectOutputStream out = null;
     try
     {
-      fos = new FileOutputStream( p_binFile );
-      out = new ObjectOutputStream( fos );
-      out.writeObject( model );
-      out.close();
+      fis = new FileInputStream( new File( inputFile ) );
+      fos = new FileOutputStream( new File( outputFile ) );
+      
+      ModelFmpInit model = inputDriver.loadGame( fis );
+      if(model != null)
+      {
+        outputDriver.saveGame( model, fos ); 
+      } else {
+        System.err.println("Error while loading model");
+      }
+      
+      fis.close();
       fos.close();
+      
     } catch( Exception ex )
     {
       ex.printStackTrace();
     }
-  }
-
-  protected static void createXml()
-  {
-    XStream xstream = new XStream( new DomDriver() );
-    EbGame game = new EbGame();
-
-    game.setLandSize( 10, 10 );
-
-    EbToken token = new EbToken();
-    token.setType( TokenType.Barge );
-    game.addToken( token );
-    game.moveToken( token, new AnBoardPosition( 1, 1 ) );
-
-    EbToken tank = new EbToken();
-    tank.setType( TokenType.Tank );
-    game.addToken( tank );
-    game.moveToken( tank, token );
-
-    EbRegistration registration = new EbRegistration();
-    game.addRegistration( registration );
-
-    xstream.toXML( game, System.out );
 
   }
+
 
 }

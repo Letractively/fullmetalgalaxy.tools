@@ -1,25 +1,33 @@
-/**
- * 
- */
-package com.fullmetalgalaxy.server.xml;
+/* *********************************************************************
+ *
+ *  This file is part of Full Metal Galaxy.
+ *  http://www.fullmetalgalaxy.com
+ *
+ *  Full Metal Galaxy is free software: you can redistribute it and/or 
+ *  modify it under the terms of the GNU Affero General Public License
+ *  as published by the Free Software Foundation, either version 3 of 
+ *  the License, or (at your option) any later version.
+ *
+ *  Full Metal Galaxy is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public 
+ *  License along with Full Metal Galaxy.  
+ *  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  Copyright 2010 Vincent Legendre
+ *
+ * *********************************************************************/
+package com.fullmetalgalaxy.tools;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.commons.fileupload.FileItemIterator;
-import org.apache.commons.fileupload.FileItemStream;
-import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.apache.commons.fileupload.util.Streams;
+import java.io.OutputStream;
 
 import com.fullmetalgalaxy.model.LandType;
+import com.fullmetalgalaxy.model.ModelFmpInit;
 import com.fullmetalgalaxy.model.PlanetType;
 import com.fullmetalgalaxy.model.TokenType;
 import com.fullmetalgalaxy.model.constant.ConfigGameTime;
@@ -28,88 +36,24 @@ import com.fullmetalgalaxy.model.persist.AnBoardPosition;
 import com.fullmetalgalaxy.model.persist.EbGame;
 import com.fullmetalgalaxy.model.persist.EbToken;
 import com.fullmetalgalaxy.server.FmpLogger;
-import com.fullmetalgalaxy.server.datastore.FmgDataStore;
 
 /**
- * @author Vincent Legendre
+ * A set of tools to manage Full Metal Program files.
+ * 
+ * This class is at very early stage and can't manage all data file.
+ * 
+ * @author vlegendr
  *
  */
-public class GameXmlServlet extends HttpServlet
+public class DriverFMP extends DriverFileFormat
 {
-  static final long serialVersionUID = 890;
-
   /**
    * The log channel
    */
-  private final static FmpLogger log = FmpLogger.getLogger( GameXmlServlet.class.getName() );
+  private final static FmpLogger LOG = FmpLogger.getLogger( DriverFMP.class.getName() );
 
-
-  /**
-   * servlet initialisation
-   * initialize SGBD connexion.
-   */
-  @Override
-  public void init() throws ServletException
-  {
-    super.init();
-  }
-
-
-
-  /* (non-Javadoc)
-   * @see javax.servlet.http.HttpServlet#doGet(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
-   */
-  @Override
-  protected final void doGet(HttpServletRequest p_req, HttpServletResponse p_resp)
-      throws ServletException, IOException
-  {
-
-  }
-
-  /* (non-Javadoc)
-   * @see javax.servlet.http.HttpServlet#doPost(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
-   */
-  @Override
-  protected final void doPost(HttpServletRequest p_req, HttpServletResponse p_resp)
-      throws ServletException, IOException
-  {
-    ServletFileUpload upload = new ServletFileUpload();
-    Map<String, String> params = new HashMap<String, String>();
-
-    try
-    {
-      // Parse the request
-      FileItemIterator iter = upload.getItemIterator( p_req );
-      while( iter.hasNext() )
-      {
-        FileItemStream item = iter.next();
-        if( item.isFormField() )
-        {
-          // this is a form param
-          params.put( item.getFieldName(), Streams.asString( item.openStream() ) );
-        }
-        else if( item.getFieldName().equalsIgnoreCase( "gamefile" ) )
-        // getContentType().startsWith( "text/xml" ) )
-        {
-          // this is an xml file
-          EbGame game = createGame( item.openStream() );
-          if( game != null )
-          {
-            FmgDataStore store = new FmgDataStore();
-            store.save( game );
-            store.close();
-          }
-          break;
-        }
-      }
-    } catch( FileUploadException e )
-    {
-      log.error( e );
-    }
-  }
-
-
-  private String readln(InputStream p_input)
+  
+  private static String readln(InputStream p_input)
   {
     int ch = 0;
     StringBuffer output = new StringBuffer();
@@ -123,17 +67,18 @@ public class GameXmlServlet extends HttpServlet
       }
     } catch( IOException e )
     {
-      log.error( e );
+      LOG.error( e );
     }
     return output.toString();
   }
 
-  private EbGame createGame(InputStream p_input)
+  
+  @Override
+  public ModelFmpInit loadGame(InputStream p_input)
   {
     EbGame game = new EbGame();
     game.setName( "upload" );
     game.setPlanetType( PlanetType.Desert );
-    game.setAsynchron( false );
     game.setConfigGameTime( ConfigGameTime.Standard );
     game.setConfigGameVariant( ConfigGameVariant.Standard );
     game.setMaxNumberOfPlayer( 4 );
@@ -141,12 +86,14 @@ public class GameXmlServlet extends HttpServlet
     String str = readln( p_input );
     if( str == null || !str.startsWith( "<FMP Format=4 Version=\"2.3.7" ) )
     {
+      LOG.error( "Bad format" );
       return null;
     }
     // lecture de la carte
     str = readln( p_input );
     if( str == null || !str.startsWith( "<CARTE Lignes=" ) )
     {
+      LOG.error( "<CARTE Lignes= not found" );
       return null;
     }
     int height = Integer.parseInt( str.substring( 14, 16 ) );
@@ -184,44 +131,50 @@ public class GameXmlServlet extends HttpServlet
     str = readln( p_input );
     if( str == null || !str.startsWith( "</CARTE>" ) )
     {
-      return null;
+      LOG.error( "</CARTE> not found" );
     }
     // lecture des minerais
     str = readln( p_input );
-    if( str == null || !str.startsWith( "<REPARTITION Lignes=" ) )
+    if( str != null && str.startsWith( "<REPARTITION Lignes=" ) )
     {
-      return null;
-    }
-    height = Integer.parseInt( str.substring( 20, 22 ) );
-    width = Integer.parseInt( str.substring( 32, 34 ) );
-    for( int iy = 0; iy < height; iy++ )
-    {
-      str = readln( p_input );
-      for( int ix = 0; ix < width; ix++ )
+      height = Integer.parseInt( str.substring( 20, 22 ) );
+      width = Integer.parseInt( str.substring( 32, 34 ) );
+      for( int iy = 0; iy < height; iy++ )
       {
-        if(str.charAt( ix ) != '.')
+        str = readln( p_input );
+        for( int ix = 0; ix < width; ix++ )
         {
-          EbToken token = new EbToken( TokenType.Ore );
-          game.addToken( token );
-          game.moveToken( token, new AnBoardPosition( ix, iy ) );
+          if(str.charAt( ix ) != '.')
+          {
+            EbToken token = new EbToken( TokenType.Ore );
+            game.addToken( token );
+            game.moveToken( token, new AnBoardPosition( ix, iy ) );
+          }
         }
       }
+      str = readln( p_input );
+      if( str == null || !str.startsWith( "</REPARTITION>" ) )
+      {
+        LOG.error( "</REPARTITION> not found" );
+      }
     }
-    str = readln( p_input );
-    if( str == null || !str.startsWith( "</REPARTITION>" ) )
-    {
-      return null;
-    }
-
+    
     try
     {
       p_input.close();
     } catch( IOException e )
     {
-      log.error( e );
+      LOG.error( e );
     }
 
-    return game;
+    return game2Model( game );
+  }
+
+
+  @Override
+  public void saveGame(ModelFmpInit p_game, OutputStream p_output)
+  {
+    LOG.error( "unimplemented" );
   }
 
   /*
