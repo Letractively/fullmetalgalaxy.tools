@@ -87,11 +87,11 @@ public class Main
     try
     {
       fis = new FileInputStream( new File( inputFile ) );
-      fos = new FileOutputStream( new File( outputFile ) );
       
       ModelFmpInit model = inputDriver.loadGame( fis );
       if(model != null)
       {
+        fos = new FileOutputStream( new File( outputFile ) );
         outputDriver.saveGame( model, fos ); 
       } else {
         System.err.println("Error while loading model");
