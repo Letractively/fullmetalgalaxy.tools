@@ -26,9 +26,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import com.fullmetalgalaxy.model.ModelFmpInit;
-import com.fullmetalgalaxy.model.persist.EbAccount;
 import com.fullmetalgalaxy.model.persist.EbGame;
-import com.fullmetalgalaxy.model.persist.EbRegistration;
+import com.fullmetalgalaxy.model.persist.Game;
 
 /**
  * @author vlegendr
@@ -44,12 +43,18 @@ public abstract class DriverFileFormat
   
   protected ModelFmpInit game2Model(Object p_game)
   {
+    if( p_game instanceof Game )
+    {
+      return game2Model( Game.class.cast( p_game ) );
+    }
     if(p_game instanceof EbGame)
     {
       return game2Model( EbGame.class.cast( p_game ) );
     }
     if(p_game instanceof ModelFmpInit)
     {
+      // used to convert EbGame into Game
+      ModelFmpInit.class.cast( p_game ).getGame();
       return ModelFmpInit.class.cast( p_game );
     }
     return null;
@@ -57,26 +62,14 @@ public abstract class DriverFileFormat
   
   protected ModelFmpInit game2Model(EbGame p_game)
   {
+    return game2Model( p_game.createGame() );
+  }
+
+  protected ModelFmpInit game2Model(Game p_game)
+  {
     ModelFmpInit model = new ModelFmpInit();
     model.setGame( p_game );
-    
-    int id = 1;
-    EbAccount account = null;
-    for(EbRegistration registration : p_game.getSetRegistration() )
-    {
-      account = new EbAccount();
-      account.setId( id );
-      switch(id)
-      {
-      case 1:
-        account.setLogin( "Vous" );
-      case 2:
-        account.setLogin( "CPU" );
-      default:
-        account.setLogin( "CPU-"+(id-1) );
-      }
-      model.getMapAccounts().put( account.getId(), account );
-    }
     return model;
   }
+
 }

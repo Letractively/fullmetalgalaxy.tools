@@ -33,8 +33,8 @@ import com.fullmetalgalaxy.model.TokenType;
 import com.fullmetalgalaxy.model.constant.ConfigGameTime;
 import com.fullmetalgalaxy.model.constant.ConfigGameVariant;
 import com.fullmetalgalaxy.model.persist.AnBoardPosition;
-import com.fullmetalgalaxy.model.persist.EbGame;
 import com.fullmetalgalaxy.model.persist.EbToken;
+import com.fullmetalgalaxy.model.persist.Game;
 import com.fullmetalgalaxy.server.FmpLogger;
 
 /**
@@ -76,7 +76,7 @@ public class DriverFMP extends DriverFileFormat
   @Override
   public ModelFmpInit loadGame(InputStream p_input)
   {
-    EbGame game = new EbGame();
+    Game game = new Game();
     game.setName( "upload" );
     game.setPlanetType( PlanetType.Desert );
     game.setConfigGameTime( ConfigGameTime.Standard );
