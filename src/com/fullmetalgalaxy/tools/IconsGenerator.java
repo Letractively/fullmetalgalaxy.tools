@@ -41,12 +41,17 @@ public class IconsGenerator
    */
   public static void main(String[] args)
   {
-    if( args.length != 1 )
+    if( args.length < 1 )
     {
       printUsage( System.out );
       return;
     }
-    String directory = args[0];
+    String directory = "";
+    for(String arg : args)
+    {
+      directory += arg +" ";
+    }
+    directory = directory.substring( 0, directory.length()-1 );
 
     // load all files
     loadFiles( directory );
@@ -143,6 +148,7 @@ public class IconsGenerator
     } catch( IOException e )
     {
       e.printStackTrace();
+      System.err.println("for file "+p_file);
     }
   }
 
