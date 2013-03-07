@@ -703,7 +703,7 @@ public class EbGame implements java.io.Serializable, GameEventStack
         return getLandPixOffset( LandType.Sea );
       }
     case Reef:
-      if( getCurrentTide() != Tide.Hight )
+      if( getCurrentTide() != Tide.High )
       {
         return getLandPixOffset( LandType.Reef );
       }

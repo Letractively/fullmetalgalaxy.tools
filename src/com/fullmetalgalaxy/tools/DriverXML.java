@@ -61,6 +61,10 @@ public class DriverXML extends DriverFileFormat
     {
       LOG.error( "no game loaded" );
     }
+    else if( model.getGame() != null )
+    {
+      model.getGame().getPreview().onLoad();
+    }
     return model;
   }
 
