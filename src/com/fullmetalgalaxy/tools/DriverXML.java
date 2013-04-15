@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import com.fullmetalgalaxy.model.ModelFmpInit;
+import com.fullmetalgalaxy.model.persist.Game;
 import com.fullmetalgalaxy.server.FmpLogger;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.DomDriver;
@@ -63,7 +64,10 @@ public class DriverXML extends DriverFileFormat
     }
     else if( model.getGame() != null )
     {
+      // call the post load method to fix old data
       model.getGame().getPreview().onLoad();
+      model.setGame( new Game( model.getGame().getPreview(), model.getGame().getData() ) );
+
     }
     return model;
   }

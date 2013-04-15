@@ -31,7 +31,6 @@ import com.fullmetalgalaxy.model.ModelFmpInit;
 import com.fullmetalgalaxy.model.PlanetType;
 import com.fullmetalgalaxy.model.TokenType;
 import com.fullmetalgalaxy.model.constant.ConfigGameTime;
-import com.fullmetalgalaxy.model.constant.ConfigGameVariant;
 import com.fullmetalgalaxy.model.persist.AnBoardPosition;
 import com.fullmetalgalaxy.model.persist.EbToken;
 import com.fullmetalgalaxy.model.persist.Game;
@@ -80,7 +79,6 @@ public class DriverFMP extends DriverFileFormat
     game.setName( "upload" );
     game.setPlanetType( PlanetType.Desert );
     game.setConfigGameTime( ConfigGameTime.Standard );
-    game.setConfigGameVariant( ConfigGameVariant.Standard );
     game.setMaxNumberOfPlayer( 4 );
 
     String str = readln( p_input );

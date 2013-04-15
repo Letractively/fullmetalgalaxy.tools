@@ -28,6 +28,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 
 import com.fullmetalgalaxy.model.ModelFmpInit;
+import com.fullmetalgalaxy.model.persist.Game;
 import com.fullmetalgalaxy.server.FmpLogger;
 
 /**
@@ -64,7 +65,9 @@ public class DriverBin extends DriverFileFormat
     }
     else if( model.getGame() != null )
     {
+      // call the post load method to fix old data
       model.getGame().getPreview().onLoad();
+      model.setGame( new Game( model.getGame().getPreview(), model.getGame().getData() ) );
     }
     return model;
   }
