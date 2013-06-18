@@ -91,6 +91,9 @@ public class Main
       ModelFmpInit model = inputDriver.loadGame( fis );
       if(model != null)
       {
+        model.getGame().getPreview().onLoad();
+        model.getGame().onLoad();
+        
         fos = new FileOutputStream( new File( outputFile ) );
         outputDriver.saveGame( model, fos ); 
       } else {

@@ -26,7 +26,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import com.fullmetalgalaxy.model.ModelFmpInit;
-import com.fullmetalgalaxy.model.persist.EbGame;
 import com.fullmetalgalaxy.model.persist.Game;
 
 /**
@@ -47,10 +46,6 @@ public abstract class DriverFileFormat
     {
       return game2Model( Game.class.cast( p_game ) );
     }
-    if(p_game instanceof EbGame)
-    {
-      return game2Model( EbGame.class.cast( p_game ) );
-    }
     if(p_game instanceof ModelFmpInit)
     {
       // used to convert EbGame into Game
@@ -60,10 +55,6 @@ public abstract class DriverFileFormat
     return null;
   }
   
-  protected ModelFmpInit game2Model(EbGame p_game)
-  {
-    return game2Model( p_game.createGame() );
-  }
 
   protected ModelFmpInit game2Model(Game p_game)
   {
